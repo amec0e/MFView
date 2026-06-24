@@ -21,7 +21,7 @@ sudo chmod 644 /var/www/html/mfview/*
 
 accessible at `http://YOUR-IP/mfview`
 
-If you do not want to host locally (which can be done on a Pi 4 2GB) you can use the [online version](https://amec0e.github.io/mfview/)
+If you do not want to host locally (which can be done on a Pi 4 2GB) you can use the [online version](https://amec0e.github.io/MFview/)
 
 ## Special Thanks
 
