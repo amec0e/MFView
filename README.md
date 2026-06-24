@@ -27,4 +27,4 @@ If you do not want to host locally (which can be done on a Pi 4 2GB) you can use
 
 - Special thanks to [@Equipter](https://github.com/equipter) for all his help with providing datasheets and dump files to help me test and verify the foundations. <3
 
-This is free to use, modify, distribute as you see fit
+This is free to use and modify as you see fit
