@@ -16,10 +16,12 @@ const CARD_DB = {
   4096: { name: 'MIFARE Classic 4K (S70)',   short: '4K',     family: 'classic', sectors: 40, blocks: 256, ev1: false },
 };
 
-// MF Plus sizes — same 16-byte block layout as Classic, different security model
-// SL1 dumps are identical to Classic. SL2/SL3 dumps also use 16-byte blocks.
-// MFP 2K = 128 blocks, MFP 4K = 256 blocks (same as MFC 2K/4K)
-// We detect Plus by SAK in the JSON/known file naming; fallback: treat like Classic
+// MIFARE Plus uses the same 16-byte block layout and sizes as Classic (2K = 128 blocks,
+// 4K = 256 blocks), so Plus dumps fall through to the Classic entries above by size.
+// SL1 is byte-for-byte identical to Classic and renders correctly via the Classic path —
+// no special-casing is needed or possible (SL1 shares SAK 08/18 with genuine Classic).
+// SL2/SL3 blocks are AES-encrypted; their SAK values are named in SAK_TYPES for display
+// only — there is no separate decode path for them.
 
 // ── ULTRALIGHT TYPE DB (keyed by page count from MAX_* defines in cmdhfmfu.c) ──
 const MFU_DB = [
@@ -56,7 +58,7 @@ function detectMFU(totalBytes) {
 // ── GEOMETRY HELPERS (Classic / Plus) ──
 function firstBlk(s)   { return s < 32 ? s * 4 : 128 + (s - 32) * 16; }
 function blksPerSec(s) { return s < 32 ? 4 : 16; }
-function secOfBlk(b)   { return b < 128 ? Math.floor(b / 4) : 32 + Math.floor((b - 128) / 16); } // reserved for DESFire
+function secOfBlk(b)   { return b < 128 ? Math.floor(b / 4) : 32 + Math.floor((b - 128) / 16); } // block → sector (currently unused helper)
 
 // ── ACCESS CONDITIONS (Classic / Plus SL1) ──
 // Exactly matches mfValidateAccessConditions() from mifare4.c lines 77-86
@@ -520,8 +522,8 @@ function detectCard(bytes) {
     // Exact size match first
     if (CARD_DB[len]) return { ...CARD_DB[len] };
 
-    // Try MF Plus (same sizes as Classic 2K/4K but SAK differs — we can't tell from dump alone;
-    // treat as Classic and label as potential Plus if sectors > 32)
+    // MF Plus 2K/4K share the same sizes as Classic 2K/4K and can't be told apart
+    // from dump data alone, so they render through the Classic entries below.
     const blks = len / 16;
     if (blks <= 20)  return { ...CARD_DB[320] };
     if (blks <= 64)  return { ...CARD_DB[1024] };
