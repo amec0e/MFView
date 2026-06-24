@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MFView</title>
+  <link rel="stylesheet" href="mfview.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- TITLE BAR -->
+  <header id="tb">
+    <button id="sb-tog" onclick="togSB()">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 3h14v1.5H1zm0 4h14v1.5H1zm0 4h14v1.5H1z"/></svg>
+    </button>
+    <div class="logo"><div class="logo-icon">MF</div>MFView</div>
+    <div class="t-sep"></div>
+    <div class="card-pills">
+      <div class="cpill type"><span class="cl">type</span><span id="p-type" class="cv">--</span></div>
+      <div class="cpill uid"><span class="cl">uid</span><span id="p-uid" class="cv">--</span></div>
+      <div class="cpill"><span class="cl">sectors</span><span id="p-sec" class="cv">--</span></div>
+      <div class="cpill"><span class="cl">blocks</span><span id="p-blk" class="cv">--</span></div>
+      <div class="cpill"><span class="cl">size</span><span id="p-sz" class="cv">--</span></div>
+    </div>
+  </header>
+
+  <!-- TOOLBAR -->
+  <div id="bar">
+    <button class="tb" onclick="triggerOpen()">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 3h5l1.5 2H15v9H1V3zm1.5 1.5V13h11V6.5H7L5.5 4.5H2.5z"/></svg>
+      Open
+    </button>
+    <button class="tb" onclick="closeDump()">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12l-1 11H3L2 3zm2 1l.8 9h6.4L12 4H4zm3-3h2v1H7V1z"/></svg>
+      Close
+    </button>
+    <div class="tsep"></div>
+    <button class="tb" id="btn-savebin"  onclick="saveAs('bin')" disabled>
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 1h8l4 4v10H2V1zm7 0v4h4M5 8h6M5 11h6M5 5h3"/></svg>
+      Save .bin
+    </button>
+    <button class="tb" id="btn-savejson" onclick="saveAs('json')" disabled>
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 1h8l4 4v10H2V1zm7 0v4h4M5 8h6M5 11h6M5 5h3"/></svg>
+      Save .json
+    </button>
+    <div class="tsep"></div>
+    <button class="tb on" id="btn-kc"  onclick="tog('kc')">Keys colour</button>
+    <button class="tb on" id="btn-st"  onclick="tog('st')">Decode ST</button>
+    <button class="tb on" id="btn-mad" onclick="tog('mad')">MAD</button>
+    <button class="tb on" id="btn-val" onclick="tog('val')">Values</button>
+    <div class="vtog">
+      <button class="vb on" id="vm-all"  onclick="setVM('all')">All</button>
+      <button class="vb"    id="vm-data" onclick="setVM('data')">Data only</button>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside id="sb">
+    <div class="sb-hdr">
+      <span>Sectors <span class="sb-cnt" id="sb-cnt">0</span></span>
+      <button class="sb-col-btn" id="sb-col-btn" onclick="collapseDesktopSB()" title="Collapse sidebar">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M10 3L5 8l5 5"/></svg>
+      </button>
+    </div>
+    <ul class="snav" id="snav"></ul>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main">
+
+    <!-- Drop zone -->
+    <div id="dz" ondragover="onDO(event)" ondragleave="onDL()" ondrop="onDrop(event)">
+      <div id="dz-inner">
+        <div class="dz-ico">MF</div>
+        <div class="dz-title">MFView</div>
+        <div class="dz-sub">MIFARE dump viewer &mdash; Classic, Plus, Ultralight &amp; NTAG</div>
+        <div class="dz-fmt">.bin &nbsp;&middot;&nbsp; .eml &nbsp;&middot;&nbsp; .json</div>
+        <button class="dz-btn" onclick="closeSupportedTypes(); triggerOpen()">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 3h5l1.5 2H15v9H1V3zm1.5 1.5V13h11V6.5H7L5.5 4.5H2.5z"/></svg>
+          Open dump file
+        </button>
+        <button class="dz-info-btn" onclick="toggleSupportedTypes(event)">
+          <svg viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7v5M8 5v1"/></svg>
+          Supported tag types
+        </button>
+      </div>
+
+      <!-- Supported types tooltip -->
+      <div id="st-tip" class="st-tip" onclick="event.stopPropagation()">
+        <div class="st-tip-hdr">
+          <span>Supported tag types &amp; extensions</span>
+          <button class="st-tip-close" onclick="closeSupportedTypes()">&#10005;</button>
+        </div>
+        <div class="st-tip-body"><table class="st-tip-tbl">
+          <thead>
+            <tr><th>Family</th><th>Tag / Security Level</th><th>.bin</th><th>.eml</th><th>.json</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr class="st-row-ok">
+              <td>Classic</td><td>Mini, 1K, 1K EV1, 2K, 4K</td>
+              <td class="ok">&#10003;</td><td class="ok">&#10003;</td><td class="ok">&#10003;</td>
+              <td>Full support</td>
+            </tr>
+            <tr class="st-row-ok">
+              <td>Plus</td><td>SL1 (2K / 4K)</td>
+              <td class="warn">~</td><td class="warn">~</td><td class="ok">&#10003;</td>
+              <td>.json only for reliable detection — bin/eml treated as Classic (identical layout)</td>
+            </tr>
+            <tr class="st-row-no">
+              <td>Plus</td><td>SL2 (SAK 10h / 11h)</td>
+              <td class="no">&#10007;</td><td class="no">&#10007;</td><td class="no">&#10007;</td>
+              <td>AES-encrypted — cannot be decoded</td>
+            </tr>
+            <tr class="st-row-no">
+              <td>Plus</td><td>SL3 (SAK 20h)</td>
+              <td class="no">&#10007;</td><td class="no">&#10007;</td><td class="no">&#10007;</td>
+              <td>AES-encrypted — cannot be decoded</td>
+            </tr>
+            <tr class="st-row-ok">
+              <td>Ultralight</td><td>UL, UL-C, UL EV1 (48 &amp; 128), UL Nano</td>
+              <td class="ok">&#10003;</td><td class="ok">&#10003;</td><td class="ok">&#10003;</td>
+              <td>Full support</td>
+            </tr>
+            <tr class="st-row-no">
+              <td>Ultralight</td><td>UL AES</td>
+              <td class="no">&#10007;</td><td class="no">&#10007;</td><td class="no">&#10007;</td>
+              <td>Not supported in firmware — no dump possible</td>
+            </tr>
+            <tr class="st-row-ok">
+              <td>NTAG</td><td>203, 210, 212, 213 / 213F / 213C, 215, 216 / 216F, 223 DNA, 224 DNA</td>
+              <td class="ok">&#10003;</td><td class="ok">&#10003;</td><td class="ok">&#10003;</td>
+              <td>Full support</td>
+            </tr>
+            <tr class="st-row-ok">
+              <td>NTAG I2C</td><td>1K, 2K</td>
+              <td class="ok">&#10003;</td><td class="ok">&#10003;</td><td class="ok">&#10003;</td>
+              <td>Full support</td>
+            </tr>
+          </tbody>
+        </table></div>
+        <div class="st-tip-foot">&#10003; supported &nbsp;&nbsp; ~ partial &nbsp;&nbsp; &#10007; not supported</div>
+      </div>
+    </div>
+
+    <!-- Dump view -->
+    <div id="dv">
+      <div id="ci"></div>
+      <div id="db"></div>
+    </div>
+
+  </main>
+
+  <!-- STATUS BAR -->
+  <footer id="st">
+    <div class="st-i">
+      <span class="st-dot"></span>
+      <span id="st-txt">Ready — open a MIFARE dump (.bin / .eml / .json)</span>
+    </div>
+    <span id="st-r"></span>
+  </footer>
+
+</div><!-- /#app -->
+
+<input type="file" id="fi" accept=".bin,.eml,.json,*" onchange="loadFile(event)">
+
+<div class="jnav" id="jnav">
+  <button class="jbtn" onclick="jumpS(-1)">&#9650;</button>
+  <button class="jbtn" onclick="jumpS(1)">&#9660;</button>
+</div>
+
+<div id="ms">
+  <div id="ms-bd" onclick="closeMS()"></div>
+  <div id="ms-p">
+    <div id="ms-h"></div>
+    <div id="ms-t">
+      <span>Sectors</span>
+      <span class="ms-hint">tap to jump</span>
+    </div>
+    <div id="ms-l"></div>
+  </div>
+</div>
+
+<script src="mfview.js"></script>
+</body>
+</html>
