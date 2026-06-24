@@ -1,5 +1,5 @@
 # MFView
-Mifare view - for viewing mifare bins 
+Mifare view - for viewing mifare bins, json or eml
 
 **Setup:**
 
